@@ -1,9 +1,25 @@
+// React Hooks:
+// - useState: speichert Zustände wie das aktuelle Projekt
+// - useRef: Referenz auf versteckte Datei-Inputs
+// - useEffect: für Seiteneffekte, z. B. Toast automatisch ausblenden
+// - useMemo: berechnet Werte nur neu, wenn nötig
 import { useEffect, useMemo, useRef, useState } from "react";
+
+// html2canvas macht aus einem HTML-Bereich ein Canvas-Bild
+// Wird hier für den PNG-Export verwendet
 import html2canvas from "html2canvas";
+
+// Zentrale CSS-Datei für das Layout und Design
 import "./App.css";
 
 
 
+////////////////////////////////////////////////////////////
+// 🌍 ÜBERSETZUNGEN
+// Hier stehen alle Texte der App in allen Sprachen.
+// Wenn du später neue Texte hinzufügst, musst du sie hier
+// in allen Sprachen ergänzen.
+////////////////////////////////////////////////////////////
 const TRANSLATIONS = {
   de: {
     languageLabel: "Sprache",
@@ -304,6 +320,12 @@ const TRANSLATIONS = {
 
 
 
+////////////////////////////////////////////////////////////
+// 🎨 THEMES / DESIGNVARIANTEN
+// Hier definierst du Farben und Stil pro Design-Thema.
+// Wenn du später neue Themes hinzufügen willst,
+// einfach hier ein neues Objekt ergänzen.
+////////////////////////////////////////////////////////////
 const THEMES = {
   clean: {
     name: "Clean",
@@ -337,15 +359,21 @@ const THEMES = {
   },
 };
 
-
-
-
+////////////////////////////////////////////////////////////
+// 🆔 HILFSFUNKTION: ZUFÄLLIGE ID ERZEUGEN
+// Diese Funktion erstellt kurze zufällige IDs für Floors
+// und Tenants. Das reicht für diese App völlig aus.
+////////////////////////////////////////////////////////////
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
-
+////////////////////////////////////////////////////////////
+// 👤 NEUEN TENANT / EINTRAG ERZEUGEN
+// "overrides" erlaubt es, Standardwerte gezielt zu überschreiben.
+// Beispiel: createTenant({ name: "Firma XY" })
+////////////////////////////////////////////////////////////
 const createTenant = (overrides = {}) => ({
   id: makeId(),
-  mode: "text",
+  mode: "text", // "text" oder "logo"
   name: "",
   subtitle: "",
   logo: null,
@@ -357,15 +385,24 @@ const createTenant = (overrides = {}) => ({
   ...overrides,
 });
 
-
+////////////////////////////////////////////////////////////
+// 🏢 NEUE ETAGE ERZEUGEN
+// Jede Etage hat:
+// - eine ID
+// - ein Label (z. B. EG, 1. OG)
+// - eine Liste von Tenants
+////////////////////////////////////////////////////////////
 const createFloor = (label = "", tenants = [createTenant()]) => ({
   id: makeId(),
   label,
   tenants,
 });
 
-
-
+////////////////////////////////////////////////////////////
+// 🚀 STANDARD-PROJEKT
+// Wird geladen, wenn die App startet oder wenn man
+// "Neues Projekt" klickt.
+////////////////////////////////////////////////////////////
 function createInitialProject() {
   return {
     language: "en",
@@ -406,8 +443,11 @@ function createInitialProject() {
   };
 }
 
-
-
+////////////////////////////////////////////////////////////
+// 🖼 DATEI IN DATA-URL UMWANDELN
+// Wird für Logo-Uploads verwendet.
+// So kann das Bild direkt im State gespeichert und angezeigt werden.
+////////////////////////////////////////////////////////////
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -417,6 +457,11 @@ function fileToDataUrl(file) {
   });
 }
 
+////////////////////////////////////////////////////////////
+// 💾 DATEI DOWNLOADEN
+// Allgemeine Hilfsfunktion für Downloads.
+// Wird z. B. für JSON-Projektdateien verwendet.
+////////////////////////////////////////////////////////////
 function download(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -427,10 +472,19 @@ function download(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
+////////////////////////////////////////////////////////////
+// 🔒 WERT BEGRENZEN
+// Hält einen Wert zwischen min und max.
+// Beispiel: clamp(400, 30, 300) => 300
+////////////////////////////////////////////////////////////
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+////////////////////////////////////////////////////////////
+// 📅 HEUTIGES DATUM ALS STRING
+// Wird für Export-Dateinamen verwendet.
+////////////////////////////////////////////////////////////
 function getTodayString() {
   const d = new Date();
   const year = d.getFullYear();
@@ -439,6 +493,10 @@ function getTodayString() {
   return `${year}-${month}-${day}`;
 }
 
+////////////////////////////////////////////////////////////
+// 🔤 TEXT ALS DATEINAMEN TAUGLICH MACHEN
+// Entfernt Sonderzeichen und ersetzt Leerzeichen durch Bindestriche.
+////////////////////////////////////////////////////////////
 function slugify(value) {
   return (value || "mieterspiegel")
     .toLowerCase()
@@ -451,10 +509,20 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+////////////////////////////////////////////////////////////
+// 📄 EXPORT-DATEINAME BAUEN
+// Beispiel:
+// tenant-directory-2026-04-08.png
+////////////////////////////////////////////////////////////
 function buildExportFilename(project, ext) {
   return `${slugify(project.buildingName || "mieterspiegel")}-${getTodayString()}.${ext}`;
 }
 
+////////////////////////////////////////////////////////////
+// 🔢 ETAGEN FÜR AUTOMATISCHE SORTIERUNG BEWERTEN
+// Höhere Stockwerke bekommen größere Werte.
+// So kann nach oben/unten logisch sortiert werden.
+////////////////////////////////////////////////////////////
 function getFloorSortValue(label) {
   const normalized = (label || "").trim().toUpperCase();
 
@@ -472,6 +540,11 @@ function getFloorSortValue(label) {
   return -5000;
 }
 
+////////////////////////////////////////////////////////////
+// 🧹 TENANT NORMALISIEREN
+// Wenn eine gespeicherte JSON-Datei geladen wird,
+// stellt diese Funktion sicher, dass alle erwarteten Felder da sind.
+////////////////////////////////////////////////////////////
 function normalizeTenant(rawTenant = {}) {
   const mode =
     rawTenant.mode === "logo" || rawTenant.mode === "text"
@@ -505,6 +578,11 @@ function normalizeTenant(rawTenant = {}) {
   });
 }
 
+////////////////////////////////////////////////////////////
+// 🧹 ETAGE NORMALISIEREN
+// Auch beim Laden von JSON wichtig, damit jede Etage
+// korrekt aufgebaut ist.
+////////////////////////////////////////////////////////////
 function normalizeFloor(rawFloor = {}) {
   const tenants = Array.isArray(rawFloor.tenants)
     ? rawFloor.tenants.map(normalizeTenant)
@@ -516,6 +594,11 @@ function normalizeFloor(rawFloor = {}) {
   );
 }
 
+////////////////////////////////////////////////////////////
+// ✅ GELADENES PROJEKT PRÜFEN UND NORMALISIEREN
+// - prüft, ob das JSON überhaupt gültig ist
+// - ergänzt fehlende Standardwerte
+////////////////////////////////////////////////////////////
 function validateAndNormalizeProject(raw, lang = "en") {
   const tr = TRANSLATIONS[lang] || TRANSLATIONS.de;
 
@@ -548,26 +631,43 @@ function validateAndNormalizeProject(raw, lang = "en") {
   };
 }
 
+////////////////////////////////////////////////////////////
+// 📍 LOGO-HORIZONTALE AUSRICHTUNG IN CSS-WERTE ÜBERSETZEN
+////////////////////////////////////////////////////////////
 function getLogoJustifyContent(align) {
   if (align === "center") return "center";
   if (align === "right") return "flex-end";
   return "flex-start";
 }
 
+////////////////////////////////////////////////////////////
+// 📍 LOGO-VERTIKALE AUSRICHTUNG IN CSS-WERTE ÜBERSETZEN
+////////////////////////////////////////////////////////////
 function getLogoAlignItems(align) {
   if (align === "top") return "flex-start";
   if (align === "bottom") return "flex-end";
   return "center";
 }
 
+////////////////////////////////////////////////////////////
+// 🔔 TOAST-COMPONENT
+// Zeigt kurze Meldungen wie "Projekt gespeichert" an.
+////////////////////////////////////////////////////////////
 function Toast({ toast }) {
   if (!toast) return null;
   return <div className={`toast toast-${toast.type}`}>{toast.message}</div>;
 }
 
+////////////////////////////////////////////////////////////
+// 👀 PREVIEW-COMPONENT
+// Diese Komponente rendert die Live-Vorschau rechts.
+// Genau dieser Bereich wird später als PNG exportiert.
+////////////////////////////////////////////////////////////
 function Preview({ project, t }) {
   const theme = THEMES[project.theme];
 
+  // Nur sichtbare Floors / Tenants anzeigen:
+  // Leere Einträge werden ausgefiltert
   const visibleFloors = project.floors
     .map((floor) => ({
       ...floor,
@@ -579,16 +679,24 @@ function Preview({ project, t }) {
     }))
     .filter((floor) => floor.label || floor.tenants.length > 0);
 
+  // Zählt grob, wie viele Einträge insgesamt sichtbar sind
+  // Wird benutzt, um das Layout automatisch kleiner/größer zu machen
   const totalEntries = visibleFloors.reduce(
     (sum, floor) => sum + Math.max(floor.tenants.length, 1),
     0
   );
 
+  // Ab vielen Einträgen auf zwei Spalten umstellen
   const useTwoColumns = visibleFloors.length >= 10 || totalEntries >= 16;
+
+  // Prüfen, ob Titel/Gebäudename/Footer überhaupt vorhanden sind
   const hasHeader = !!(project.title || project.buildingName);
   const hasFooter = !!project.footerText;
+
+  // Feste Vorschau-Höhe im Editor
   const previewHeight = 640;
 
+  // Standard-Layoutwerte
   let layout = {
     padding: 28,
     headerGap: 22,
@@ -604,6 +712,7 @@ function Preview({ project, t }) {
     accentWidth: 42,
   };
 
+  // Je nach Anzahl Einträge wird das Layout dynamisch skaliert
   if (totalEntries <= 3) {
     layout = {
       padding: 34,
@@ -681,6 +790,7 @@ function Preview({ project, t }) {
     };
   }
 
+  // Verfügbaren Platz in der Vorschau berechnen
   const headerHeight = hasHeader ? 70 + layout.headerGap : 0;
   const footerHeight = hasFooter ? 28 : 0;
   const availableHeight =
@@ -690,18 +800,20 @@ function Preview({ project, t }) {
     ? Math.ceil(visibleFloors.length / 2)
     : visibleFloors.length;
 
+  // Automatische Höhe pro Etage
   const rowHeight =
     rowCount > 0
       ? Math.max(52, Math.min(110, availableHeight / rowCount))
       : 70;
 
+  // Warnhinweise bei vielen Einträgen
   const isDense = totalEntries >= 12;
   const isVeryDense = totalEntries >= 16;
 
   return (
     <div className="preview-wrap">
       <div
-        id="preview-capture"
+        id="preview-capture" // Dieser Bereich wird als PNG exportiert
         className="phone-preview"
         style={{
           background: theme.background,
@@ -759,6 +871,7 @@ function Preview({ project, t }) {
 
                 <div className="floor-content">
                   {floor.tenants.map((tenant) => {
+                    // Logosize auf sinnvolle Grenzen beschränken
                     const logoScale = clamp(tenant.logoScale || 100, 30, 300);
                     const logoBoxWidth = layout.logoBoxWidth;
                     const logoBoxHeight = layout.logoBoxHeight;
@@ -771,6 +884,7 @@ function Preview({ project, t }) {
                         key={tenant.id}
                         style={{ gap: `${layout.tenantGap}px` }}
                       >
+                        {/* Logo-Modus */}
                         {tenant.mode === "logo" && tenant.logo ? (
                           <div
                             className="tenant-logo-box"
@@ -799,6 +913,7 @@ function Preview({ project, t }) {
                           </div>
                         ) : null}
 
+                        {/* Text-Modus */}
                         {tenant.mode === "text" ? (
                           <div
                             className="tenant-text-wrap"
@@ -833,6 +948,7 @@ function Preview({ project, t }) {
                     );
                   })}
 
+                  {/* Trennlinie zwischen den Etagen */}
                   <div
                     className="floor-line"
                     style={{
@@ -846,6 +962,7 @@ function Preview({ project, t }) {
           </div>
         </div>
 
+        {/* Footer nur anzeigen, wenn Text vorhanden ist */}
         {hasFooter ? (
           <div
             className="preview-footer"
@@ -859,6 +976,7 @@ function Preview({ project, t }) {
         ) : null}
       </div>
 
+      {/* Hinweis unter der Vorschau bei vielen Einträgen */}
       {isDense ? (
         <div className={`preview-warning ${isVeryDense ? "strong" : ""}`}>
           {isVeryDense ? t.veryDenseWarning : t.denseWarning}
@@ -868,21 +986,38 @@ function Preview({ project, t }) {
   );
 }
 
+////////////////////////////////////////////////////////////
+// 🚀 HAUPTKOMPONENTE DER APP
+////////////////////////////////////////////////////////////
 export default function App() {
+  // Gesamtes Projekt (Titel, Etagen, Sprache, Theme, etc.)
   const [project, setProject] = useState(createInitialProject);
+
+  // Toast-Meldung
   const [toast, setToast] = useState(null);
+
+  // Referenz auf den versteckten Datei-Input
   const loadInputRef = useRef(null);
 
+  //////////////////////////////////////////////////////////
+  // Toast automatisch nach 2.6 Sekunden ausblenden
+  //////////////////////////////////////////////////////////
   useEffect(() => {
     if (!toast) return;
     const timeout = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(timeout);
   }, [toast]);
 
+  //////////////////////////////////////////////////////////
+  // Kurze Meldung anzeigen
+  //////////////////////////////////////////////////////////
   const showToast = (message, type = "info") => {
     setToast({ message, type });
   };
 
+  //////////////////////////////////////////////////////////
+  // Theme-Auswahl für das Dropdown vorbereiten
+  //////////////////////////////////////////////////////////
   const themeOptions = useMemo(
     () =>
       Object.entries(THEMES).map(([key, value]) => ({
@@ -892,12 +1027,22 @@ export default function App() {
     []
   );
 
+  //////////////////////////////////////////////////////////
+  // Aktuelle Sprache bestimmen
+  //////////////////////////////////////////////////////////
   const t = TRANSLATIONS[project.language || "en"] || TRANSLATIONS.en;
 
+  //////////////////////////////////////////////////////////
+  // PROJEKT-PATCH
+  // Ändert einzelne Felder im Projekt
+  //////////////////////////////////////////////////////////
   const updateProject = (patch) => {
     setProject((prev) => ({ ...prev, ...patch }));
   };
 
+  //////////////////////////////////////////////////////////
+  // EINE ETAGE ÄNDERN
+  //////////////////////////////////////////////////////////
   const updateFloor = (floorId, patch) => {
     setProject((prev) => ({
       ...prev,
@@ -907,6 +1052,9 @@ export default function App() {
     }));
   };
 
+  //////////////////////////////////////////////////////////
+  // EINEN TENANT ÄNDERN
+  //////////////////////////////////////////////////////////
   const updateTenant = (floorId, tenantId, patch) => {
     setProject((prev) => ({
       ...prev,
@@ -923,6 +1071,11 @@ export default function App() {
     }));
   };
 
+  //////////////////////////////////////////////////////////
+  // TENANT-MODUS ÄNDERN
+  // Text-Modus setzt Logo zurück
+  // Logo-Modus setzt Text zurück
+  //////////////////////////////////////////////////////////
   const setTenantMode = (floorId, tenantId, mode) => {
     setProject((prev) => ({
       ...prev,
@@ -959,6 +1112,10 @@ export default function App() {
     }));
   };
 
+  //////////////////////////////////////////////////////////
+  // NEUE ETAGE HINZUFÜGEN
+  // Versucht automatisch eine sinnvolle Bezeichnung zu wählen
+  //////////////////////////////////////////////////////////
   const addFloor = () => {
     setProject((prev) => {
       let newLabel = "EG";
@@ -991,6 +1148,9 @@ export default function App() {
     });
   };
 
+  //////////////////////////////////////////////////////////
+  // ETAGE LÖSCHEN
+  //////////////////////////////////////////////////////////
   const removeFloor = (floorId) => {
     setProject((prev) => ({
       ...prev,
@@ -999,6 +1159,9 @@ export default function App() {
     showToast(t.toastFloorDeleted, "info");
   };
 
+  //////////////////////////////////////////////////////////
+  // ETAGE NACH OBEN / UNTEN BEWEGEN
+  //////////////////////////////////////////////////////////
   const moveFloor = (floorId, direction) => {
     setProject((prev) => {
       const idx = prev.floors.findIndex((f) => f.id === floorId);
@@ -1012,6 +1175,9 @@ export default function App() {
     });
   };
 
+  //////////////////////////////////////////////////////////
+  // ETAGEN AUTOMATISCH SORTIEREN
+  //////////////////////////////////////////////////////////
   const sortFloors = () => {
     setProject((prev) => ({
       ...prev,
@@ -1022,6 +1188,9 @@ export default function App() {
     showToast(t.toastFloorsSorted, "success");
   };
 
+  //////////////////////////////////////////////////////////
+  // TENANT HINZUFÜGEN
+  //////////////////////////////////////////////////////////
   const addTenant = (floorId) => {
     setProject((prev) => ({
       ...prev,
@@ -1033,6 +1202,9 @@ export default function App() {
     }));
   };
 
+  //////////////////////////////////////////////////////////
+  // TENANT LÖSCHEN
+  //////////////////////////////////////////////////////////
   const removeTenant = (floorId, tenantId) => {
     setProject((prev) => ({
       ...prev,
@@ -1048,6 +1220,10 @@ export default function App() {
     showToast(t.toastEntryDeleted, "info");
   };
 
+  //////////////////////////////////////////////////////////
+  // LOGO HOCHLADEN
+  // Das Bild wird als Data-URL gespeichert
+  //////////////////////////////////////////////////////////
   const onLogoUpload = async (floorId, tenantId, file) => {
     if (!file) return;
 
@@ -1065,6 +1241,9 @@ export default function App() {
     }
   };
 
+  //////////////////////////////////////////////////////////
+  // PROJEKT ALS JSON SPEICHERN
+  //////////////////////////////////////////////////////////
   const saveProject = () => {
     download(
       buildExportFilename(project, "json"),
@@ -1074,6 +1253,10 @@ export default function App() {
     showToast(t.toastProjectSaved, "success");
   };
 
+  //////////////////////////////////////////////////////////
+  // PROJEKT LADEN
+  // Liest JSON-Datei ein, prüft sie und setzt sie in den State
+  //////////////////////////////////////////////////////////
   const loadProject = async (file) => {
     if (!file) return;
 
@@ -1093,11 +1276,18 @@ export default function App() {
     }
   };
 
+  //////////////////////////////////////////////////////////
+  // PROJEKT ZURÜCKSETZEN
+  //////////////////////////////////////////////////////////
   const resetProject = () => {
     setProject(createInitialProject());
     showToast(t.toastProjectReset, "success");
   };
 
+  //////////////////////////////////////////////////////////
+  // PNG EXPORT
+  // Exportiert die Vorschau rechts als Bild mit 1080 x 1920 px
+  //////////////////////////////////////////////////////////
   const exportPng = async () => {
     const element = document.getElementById("preview-capture");
     if (!element) return;
@@ -1105,6 +1295,7 @@ export default function App() {
     const targetWidth = 1080;
     const targetHeight = 1920;
 
+    // Vorübergehend Styling entfernen, damit keine falschen Ränder exportiert werden
     const originalStyles = {
       borderRadius: element.style.borderRadius,
       boxShadow: element.style.boxShadow,
@@ -1118,6 +1309,7 @@ export default function App() {
     element.style.margin = "0";
 
     try {
+      // Vorschau als Canvas rendern
       const sourceCanvas = await html2canvas(element, {
         scale: 5,
         useCORS: true,
@@ -1125,6 +1317,7 @@ export default function App() {
         logging: false,
       });
 
+      // Neues Canvas in Zielgröße erzeugen
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = targetWidth;
       exportCanvas.height = targetHeight;
@@ -1132,6 +1325,7 @@ export default function App() {
       const ctx = exportCanvas.getContext("2d");
       if (!ctx) throw new Error(t.toastPngError);
 
+      // Canvas leeren und Screenshot passend skalieren
       ctx.clearRect(0, 0, targetWidth, targetHeight);
       ctx.drawImage(
         sourceCanvas,
@@ -1145,8 +1339,10 @@ export default function App() {
         targetHeight
       );
 
+      // Als PNG umwandeln
       const dataUrl = exportCanvas.toDataURL("image/png");
 
+      // Download auslösen
       const link = document.createElement("a");
       link.href = dataUrl;
       link.download = buildExportFilename(project, "png");
@@ -1156,18 +1352,25 @@ export default function App() {
     } catch (error) {
       showToast(error?.message || t.toastPngError, "error");
     } finally {
+      // Ursprüngliches Styling wiederherstellen
       Object.assign(element.style, originalStyles);
     }
   };
 
+  //////////////////////////////////////////////////////////
+  // JSX / UI DER APP
+  //////////////////////////////////////////////////////////
   return (
     <div className="app-shell">
+      {/* Toast-Meldung */}
       <Toast toast={toast} />
 
       <div className="layout">
+        {/* LINKE SEITE: EDITOR */}
         <div className="panel">
           <h1 className="editor-title">{t.appTitle}</h1>
 
+          {/* Sprache auswählen */}
           <div className="grid-two">
             <div className="field">
               <label>{t.languageLabel}</label>
@@ -1183,6 +1386,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* Titel und Objektname */}
           <div className="grid-two">
             <div className="field">
               <label>{t.titleLabel}</label>
@@ -1203,6 +1407,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* Theme und Footer */}
           <div className="grid-two">
             <div className="field">
               <label>{t.designVariantLabel}</label>
@@ -1228,6 +1433,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* Bereich Etagen & Tenants */}
           <div className="section-header">
             <h2>{t.floorsAndTenants}</h2>
             <div className="section-header-actions">
@@ -1240,6 +1446,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* Alle Etagen rendern */}
           <div className="floor-editor-list">
             {project.floors.map((floor, floorIndex) => (
               <div className="floor-card" key={floor.id}>
@@ -1255,6 +1462,7 @@ export default function App() {
                     />
                   </div>
 
+                  {/* Etage bewegen / löschen */}
                   <div className="move-buttons">
                     <button
                       onClick={() => moveFloor(floor.id, "up")}
@@ -1272,9 +1480,11 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Alle Tenants pro Etage */}
                 <div className="tenant-editor-list">
                   {floor.tenants.map((tenant) => (
                     <div className="tenant-card" key={tenant.id}>
+                      {/* Umschalten zwischen Text und Logo */}
                       <div className="entry-mode-switch">
                         <button
                           className={
@@ -1304,6 +1514,7 @@ export default function App() {
                         </button>
                       </div>
 
+                      {/* Eingabefelder */}
                       <div className="grid-two grid-two-tenant">
                         <div className="field">
                           <label>{t.tenantCompanyLabel}</label>
@@ -1431,6 +1642,7 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* Aktionen pro Tenant */}
                       <div className="tenant-actions">
                         <label
                           className={`upload-btn ${
@@ -1492,6 +1704,7 @@ export default function App() {
                   ))}
                 </div>
 
+                {/* Neuer Tenant auf dieser Etage */}
                 <button
                   className="secondary-btn"
                   onClick={() => addTenant(floor.id)}
@@ -1502,6 +1715,7 @@ export default function App() {
             ))}
           </div>
 
+          {/* Haupt-Aktionsbuttons */}
           <div className="toolbar">
             <button className="primary-btn" onClick={saveProject}>
               {t.saveProject}
@@ -1522,6 +1736,7 @@ export default function App() {
               {t.createPng}
             </button>
 
+            {/* Versteckter Datei-Input für Projekt laden */}
             <input
               ref={loadInputRef}
               type="file"
@@ -1531,8 +1746,10 @@ export default function App() {
             />
           </div>
 
+          {/* Gelber Hinweisbanner */}
           <div className="hint-box">{t.hintText}</div>
 
+          {/* Anleitung unter dem Banner */}
           <div className="instruction-box">
             <strong>{t.instructionsTitle}</strong>
             <ul className="hint-list">
@@ -1545,6 +1762,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* RECHTE SEITE: STICKY PREVIEW */}
         <div className="panel preview-panel-sticky">
           <div className="preview-header-row">
             <h2 className="preview-heading">{t.previewTitle}</h2>
