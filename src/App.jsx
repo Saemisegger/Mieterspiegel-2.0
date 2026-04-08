@@ -369,8 +369,8 @@ const createFloor = (label = "", tenants = [createTenant()]) => ({
 function createInitialProject() {
   return {
     language: "en",
-    title: "Tenant directory",
-    buildingName: "Example building",
+    title: "Tenant director y",
+    buildingName: "example building",
     theme: "dark",
     footerText: "",
     floors: [
