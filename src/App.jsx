@@ -2,9 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import "./App.css";
 
-///////////////////////////////////////////////////////////
-// 🌍 TRANSLATIONS (ALLE SPRACHEN)
-///////////////////////////////////////////////////////////
+
 
 const TRANSLATIONS = {
   de: {
@@ -304,9 +302,7 @@ const TRANSLATIONS = {
   },
 };
 
-///////////////////////////////////////////////////////////
-// 🎨 DESIGN THEMES
-///////////////////////////////////////////////////////////
+
 
 const THEMES = {
   clean: {
@@ -341,19 +337,12 @@ const THEMES = {
   },
 };
 
-///////////////////////////////////////////////////////////
-// 🎨 DESIGN THEMES
-///////////////////////////////////////////////////////////
 
-/**
- * Erstellt eine zufällige ID
- * Wird für Floors und Tenants verwendet
- */
+
+
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
-/**
- * Erstellt einen neuen Tenant (Firma)
- */
+
 const createTenant = (overrides = {}) => ({
   id: makeId(),
   mode: "text",
@@ -368,18 +357,14 @@ const createTenant = (overrides = {}) => ({
   ...overrides,
 });
 
-/**
- * Erstellt eine neue Etage
- */
+
 const createFloor = (label = "", tenants = [createTenant()]) => ({
   id: makeId(),
   label,
   tenants,
 });
 
-///////////////////////////////////////////////////////////
-// 🧾 START-PROJEKT (Wird beim Start geladen)
-///////////////////////////////////////////////////////////
+
 
 function createInitialProject() {
   return {
