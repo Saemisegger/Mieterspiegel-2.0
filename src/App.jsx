@@ -366,6 +366,50 @@ const THEMES = {
 ////////////////////////////////////////////////////////////
 const makeId = () => Math.random().toString(36).slice(2, 10);
 
+function getGlobalNameFontSize(floors, baseFontSize) {
+  const textTenants = floors.flatMap((floor) =>
+    floor.tenants.filter((tenant) => tenant.mode === "text" && tenant.name)
+  );
+
+  if (textTenants.length === 0) return baseFontSize;
+
+  const longestLength = Math.max(
+    ...textTenants.map((tenant) =>
+      tenant.name
+        .split("\n")
+        .reduce((max, line) => Math.max(max, line.trim().length), 0)
+    )
+  );
+
+  if (longestLength <= 18) return baseFontSize;
+  if (longestLength <= 24) return baseFontSize * 0.92;
+  if (longestLength <= 30) return baseFontSize * 0.84;
+  if (longestLength <= 36) return baseFontSize * 0.76;
+  if (longestLength <= 42) return baseFontSize * 0.68;
+  return baseFontSize * 0.6;
+}
+
+function getGlobalSubtitleFontSize(floors, baseFontSize) {
+  const textTenants = floors.flatMap((floor) =>
+    floor.tenants.filter((tenant) => tenant.mode === "text" && tenant.subtitle)
+  );
+
+  if (textTenants.length === 0) return baseFontSize;
+
+  const longestLength = Math.max(
+    ...textTenants.map((tenant) =>
+      tenant.subtitle
+        .split("\n")
+        .reduce((max, line) => Math.max(max, line.trim().length), 0)
+    )
+  );
+
+  if (longestLength <= 20) return baseFontSize;
+  if (longestLength <= 28) return baseFontSize * 0.92;
+  if (longestLength <= 34) return baseFontSize * 0.84;
+  if (longestLength <= 40) return baseFontSize * 0.76;
+  return baseFontSize * 0.68;
+}
 ////////////////////////////////////////////////////////////
 // 👤 NEUEN TENANT / EINTRAG ERZEUGEN
 // "overrides" erlaubt es, Standardwerte gezielt zu überschreiben.
@@ -472,37 +516,7 @@ function download(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
-////////////////////////////////////////////////////////////
-// 🔒 WERT BEGRENZEN
-// Hält einen Wert zwischen min und max.
-// Beispiel: clamp(400, 30, 300) => 300
-////////////////////////////////////////////////////////////
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
 
-// Berechnet eine passende Schriftgrösse für einen Tenant-Namen.
-// Ziel:
-// - ohne manuellen Zeilenumbruch möglichst 1 Zeile
-// - bei sehr langen Namen automatisch kleiner
-function getTenantNameFontSize(name, baseFontSize) {
-  if (!name) return baseFontSize;
-
-  // Wenn der Benutzer selbst Zeilenumbrüche gesetzt hat,
-  // nicht automatisch stark verkleinern
-  if (name.includes("\n")) {
-    return baseFontSize;
-  }
-
-  const length = name.trim().length;
-
-  // Grobe, praxistaugliche Abstufung nach Zeichenlänge
-  if (length <= 18) return baseFontSize;
-  if (length <= 24) return baseFontSize * 0.92;
-  if (length <= 30) return baseFontSize * 0.84;
-  if (length <= 38) return baseFontSize * 0.76;
-  return baseFontSize * 0.68;
-}
 ////////////////////////////////////////////////////////////
 // 📅 HEUTIGES DATUM ALS STRING
 // Wird für Export-Dateinamen verwendet.
@@ -831,6 +845,15 @@ function Preview({ project, t }) {
   // Warnhinweise bei vielen Einträgen
   const isDense = totalEntries >= 12;
   const isVeryDense = totalEntries >= 16;
+  const globalTenantNameFontSize = getGlobalNameFontSize(
+  visibleFloors,
+  layout.tenantFont
+);
+
+const globalTenantSubtitleFontSize = getGlobalSubtitleFontSize(
+  visibleFloors,
+  layout.subtitleFont
+);
 
   return (
     <div className="preview-wrap">
@@ -942,45 +965,38 @@ function Preview({ project, t }) {
     style={{ gap: `${layout.tenantInnerGap}px` }}
   >
     {/* NAME */}
-    {tenant.name ? (
-      <div
-        className="tenant-name"
-        style={{
-          color: theme.text,
-          fontSize: `${getTenantNameFontSize(
-            tenant.name,
-            layout.tenantFont
-          )}px`,
-          whiteSpace: tenant.name.includes("\n")
-            ? "pre-line"
-            : "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          maxWidth: "100%",
-        }}
-      >
-        {tenant.name}
-      </div>
-    ) : null}
+{tenant.name ? (
+  <div
+    className="tenant-name"
+    style={{
+      color: theme.text,
+      fontSize: `${globalTenantNameFontSize}px`,
+      whiteSpace: tenant.name.includes("\n") ? "pre-line" : "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%",
+    }}
+  >
+    {tenant.name}
+  </div>
+) : null}
 
     {/* SUBTITLE */}
-    {tenant.subtitle ? (
-      <div
-        className="tenant-subtitle"
-        style={{
-          color: theme.subtext,
-          fontSize: `${layout.subtitleFont}px`,
-          whiteSpace: tenant.subtitle.includes("\n")
-            ? "pre-line"
-            : "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          maxWidth: "100%",
-        }}
-      >
-        {tenant.subtitle}
-      </div>
-    ) : null}
+{tenant.subtitle ? (
+  <div
+    className="tenant-subtitle"
+    style={{
+      color: theme.subtext,
+      fontSize: `${globalTenantSubtitleFontSize}px`,
+      whiteSpace: tenant.subtitle.includes("\n") ? "pre-line" : "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%",
+    }}
+  >
+    {tenant.subtitle}
+  </div>
+) : null}
   </div>
 ) : null}
                       </div>
