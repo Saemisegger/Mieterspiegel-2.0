@@ -481,6 +481,28 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+// Berechnet eine passende Schriftgrösse für einen Tenant-Namen.
+// Ziel:
+// - ohne manuellen Zeilenumbruch möglichst 1 Zeile
+// - bei sehr langen Namen automatisch kleiner
+function getTenantNameFontSize(name, baseFontSize) {
+  if (!name) return baseFontSize;
+
+  // Wenn der Benutzer selbst Zeilenumbrüche gesetzt hat,
+  // nicht automatisch stark verkleinern
+  if (name.includes("\n")) {
+    return baseFontSize;
+  }
+
+  const length = name.trim().length;
+
+  // Grobe, praxistaugliche Abstufung nach Zeichenlänge
+  if (length <= 18) return baseFontSize;
+  if (length <= 24) return baseFontSize * 0.92;
+  if (length <= 30) return baseFontSize * 0.84;
+  if (length <= 38) return baseFontSize * 0.76;
+  return baseFontSize * 0.68;
+}
 ////////////////////////////////////////////////////////////
 // 📅 HEUTIGES DATUM ALS STRING
 // Wird für Export-Dateinamen verwendet.
@@ -914,36 +936,53 @@ function Preview({ project, t }) {
                         ) : null}
 
                         {/* Text-Modus */}
-                        {tenant.mode === "text" ? (
-                          <div
-                            className="tenant-text-wrap"
-                            style={{ gap: `${layout.tenantInnerGap}px` }}
-                          >
-                            {tenant.name ? (
-                              <div
-                                className="tenant-name"
-                                style={{
-                                  color: theme.text,
-                                  fontSize: `${layout.tenantFont}px`,
-                                }}
-                              >
-                                {tenant.name}
-                              </div>
-                            ) : null}
+{tenant.mode === "text" ? (
+  <div
+    className="tenant-text-wrap"
+    style={{ gap: `${layout.tenantInnerGap}px` }}
+  >
+    {/* NAME */}
+    {tenant.name ? (
+      <div
+        className="tenant-name"
+        style={{
+          color: theme.text,
+          fontSize: `${getTenantNameFontSize(
+            tenant.name,
+            layout.tenantFont
+          )}px`,
+          whiteSpace: tenant.name.includes("\n")
+            ? "pre-line"
+            : "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "100%",
+        }}
+      >
+        {tenant.name}
+      </div>
+    ) : null}
 
-                            {tenant.subtitle ? (
-                              <div
-                                className="tenant-subtitle"
-                                style={{
-                                  color: theme.subtext,
-                                  fontSize: `${layout.subtitleFont}px`,
-                                }}
-                              >
-                                {tenant.subtitle}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
+    {/* SUBTITLE */}
+    {tenant.subtitle ? (
+      <div
+        className="tenant-subtitle"
+        style={{
+          color: theme.subtext,
+          fontSize: `${layout.subtitleFont}px`,
+          whiteSpace: tenant.subtitle.includes("\n")
+            ? "pre-line"
+            : "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "100%",
+        }}
+      >
+        {tenant.subtitle}
+      </div>
+    ) : null}
+  </div>
+) : null}
                       </div>
                     );
                   })}
@@ -1518,7 +1557,7 @@ export default function App() {
                       <div className="grid-two grid-two-tenant">
                         <div className="field">
                           <label>{t.tenantCompanyLabel}</label>
-                          <input
+                          <textarea
                             value={tenant.name}
                             onChange={(e) =>
                               updateTenant(floor.id, tenant.id, {
@@ -1527,23 +1566,25 @@ export default function App() {
                             }
                             placeholder={t.placeholderTenant}
                             disabled={tenant.mode !== "text"}
+                            rows={2}
                           />
                         </div>
 
-                        <div className="field">
-                          <label>{t.subtitleLabel}</label>
-                          <input
-                            value={tenant.subtitle}
-                            onChange={(e) =>
-                              updateTenant(floor.id, tenant.id, {
-                                subtitle: e.target.value,
-                              })
-                            }
-                            placeholder={t.placeholderSubtitle}
-                            disabled={tenant.mode !== "text"}
-                          />
-                        </div>
-
+<div className="field">
+  <label>{t.subtitleLabel}</label>
+  <textarea
+    value={tenant.subtitle}
+    onChange={(e) =>
+      updateTenant(floor.id, tenant.id, {
+        subtitle: e.target.value,
+      })
+    }
+    placeholder={t.placeholderSubtitle}
+    disabled={tenant.mode !== "text"}
+    rows={2}
+  />
+</div>
+  
                         <div className="field">
                           <label>{t.logoSizeLabel}</label>
                           <input

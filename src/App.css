@@ -177,12 +177,18 @@ select:disabled {
   Standard-Styling für Inputs und Selects
 */
 .field input,
+.field textarea,
 .field select {
   width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 12px;
   padding: 12px 14px;
   background: white;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 48px;
 }
 
 /* 
