@@ -853,6 +853,7 @@ function Preview({ project, t }) {
   // Warnhinweise bei vielen Einträgen
   const isDense = totalEntries >= 12;
   const isVeryDense = totalEntries >= 16;
+  
   const globalTenantNameFontSize = getGlobalNameFontSize(
   visibleFloors,
   layout.tenantFont
@@ -981,7 +982,7 @@ const globalTenantSubtitleFontSize = getGlobalSubtitleFontSize(
       fontSize: `${globalTenantNameFontSize}px`,
       whiteSpace: tenant.name.includes("\n") ? "pre-line" : "nowrap",
       overflow: "hidden",
-      textOverflow: "ellipsis",
+      textOverflow: "clip",
       maxWidth: "100%",
     }}
   >
