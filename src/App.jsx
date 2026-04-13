@@ -516,6 +516,14 @@ function download(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
+////////////////////////////////////////////////////////////
+// 🔒 WERT BEGRENZEN (clamp)
+// Hält einen Wert zwischen min und max
+////////////////////////////////////////////////////////////
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 
 ////////////////////////////////////////////////////////////
 // 📅 HEUTIGES DATUM ALS STRING
