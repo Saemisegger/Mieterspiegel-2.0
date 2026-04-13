@@ -523,7 +523,50 @@ function download(filename, content, type) {
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
+function measureLongestLineWidth(
+  text,
+  fontSize,
+  fontWeight = 700,
+  fontFamily = "Inter, Arial, Helvetica, sans-serif"
+) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return 0;
 
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+  return String(text || "")
+    .split("\n")
+    .reduce((max, line) => Math.max(max, ctx.measureText(line).width), 0);
+}
+
+function getGlobalFittedFontSize({
+  texts,
+  baseFontSize,
+  minFontSize,
+  availableWidth,
+  fontWeight = 700,
+}) {
+  if (!texts.length) return baseFontSize;
+
+  let size = baseFontSize;
+
+  while (size >= minFontSize) {
+    const fits = texts.every((text) => {
+      const longestLineWidth = measureLongestLineWidth(
+        text,
+        size,
+        fontWeight
+      );
+      return longestLineWidth <= availableWidth;
+    });
+
+    if (fits) return size;
+    size -= 0.5;
+  }
+
+  return minFontSize;
+}
 
 ////////////////////////////////////////////////////////////
 // 📅 HEUTIGES DATUM ALS STRING
@@ -854,15 +897,49 @@ function Preview({ project, t }) {
   const isDense = totalEntries >= 12;
   const isVeryDense = totalEntries >= 16;
   
-  const globalTenantNameFontSize = getGlobalNameFontSize(
-  visibleFloors,
-  layout.tenantFont
+  // Innere Breite der Preview
+const previewInnerWidth = 360 - layout.padding * 2;
+
+// Breite einer Spalte
+const columnWidth = useTwoColumns
+  ? (previewInnerWidth - 20) / 2
+  : previewInnerWidth;
+
+// Platz für den Textbereich rechts vom Floor-Label
+const textAvailableWidth = Math.max(80, columnWidth - layout.floorCol - 10);
+
+// Alle sichtbaren Text-Namen sammeln
+const allVisibleNames = visibleFloors.flatMap((floor) =>
+  floor.tenants
+    .filter((tenant) => tenant.mode === "text" && tenant.name)
+    .map((tenant) => tenant.name)
 );
 
-const globalTenantSubtitleFontSize = getGlobalSubtitleFontSize(
-  visibleFloors,
-  layout.subtitleFont
+// Alle sichtbaren Unterzeilen sammeln
+const allVisibleSubtitles = visibleFloors.flatMap((floor) =>
+  floor.tenants
+    .filter((tenant) => tenant.mode === "text" && tenant.subtitle)
+    .map((tenant) => tenant.subtitle)
 );
+
+// Eine globale Schriftgrösse für ALLE Namen
+const globalTenantNameFontSize = getGlobalFittedFontSize({
+  texts: allVisibleNames,
+  baseFontSize: layout.tenantFont,
+  minFontSize: Math.max(10, layout.tenantFont * 0.55),
+  availableWidth: textAvailableWidth,
+  fontWeight: 700,
+});
+
+// Eine globale Schriftgrösse für ALLE Unterzeilen
+const globalTenantSubtitleFontSize = getGlobalFittedFontSize({
+  texts: allVisibleSubtitles,
+  baseFontSize: layout.subtitleFont,
+  minFontSize: Math.max(8, layout.subtitleFont * 0.65),
+  availableWidth: textAvailableWidth,
+  fontWeight: 400,
+});
+
 
   return (
     <div className="preview-wrap">
@@ -982,7 +1059,7 @@ const globalTenantSubtitleFontSize = getGlobalSubtitleFontSize(
       fontSize: `${globalTenantNameFontSize}px`,
       whiteSpace: tenant.name.includes("\n") ? "pre-line" : "nowrap",
       overflow: "hidden",
-      textOverflow: "clip",
+      textOverflow: "ellipsis",
       maxWidth: "100%",
     }}
   >
