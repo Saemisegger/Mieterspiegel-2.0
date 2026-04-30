@@ -349,7 +349,7 @@ const THEMES = {
   },
   corporate: {
     name: "Corporate",
-    background: "#f8fafc",
+    background: "#006cd8",
     text: "#0f172a",
     subtext: "#64748b",
     line: "#cbd5e1",
