@@ -347,14 +347,14 @@ const THEMES = {
     cardBorder: "#1e293b",
     logoBg: "transparent",
   },
-  corporate: {
-    name: "Corporate",
-    background: "#006cd8",
-    text: "#0f172a",
-    subtext: "#64748b",
-    line: "#cbd5e1",
-    accent: "#0369a1",
-    cardBorder: "#dbeafe",
+  custom: {
+    name: "Custom",
+    background: "#ffffff",
+    text: "#111827",
+    subtext: "#6b7280",
+    line: "#e5e7eb",
+    accent: "#111827",
+    cardBorder: "#e5e7eb",
     logoBg: "transparent",
   },
 };
@@ -453,6 +453,16 @@ function createInitialProject() {
     title: "Tenant directory",
     buildingName: "Example building",
     theme: "dark",
+    customBackgroundType: "color",
+    customBackgroundColor: "#ffffff",
+    customBackgroundImage: null,
+    customTextColor: "#111827",
+    customSubtextColor: "#6b7280",
+    customHeaderMode: "text",
+    customHeaderLogo: null,
+    customHeaderLogoScale: 100,
+    customHeaderLogoOffsetX: 0,
+    customHeaderLogoOffsetY: 0,
     footerText: "",
     floors: [
       createFloor("3. OG", [
@@ -715,6 +725,51 @@ function validateAndNormalizeProject(raw, lang = "en") {
         : "dark",
     footerText: typeof raw.footerText === "string" ? raw.footerText : "",
     floors,
+    customBackgroundType:
+  raw.customBackgroundType === "image" ? "image" : "color",
+
+customBackgroundColor:
+  typeof raw.customBackgroundColor === "string"
+    ? raw.customBackgroundColor
+    : "#ffffff",
+
+customBackgroundImage:
+  typeof raw.customBackgroundImage === "string"
+    ? raw.customBackgroundImage
+    : null,
+
+customTextColor:
+  typeof raw.customTextColor === "string"
+    ? raw.customTextColor
+    : "#111827",
+
+customSubtextColor:
+  typeof raw.customSubtextColor === "string"
+    ? raw.customSubtextColor
+    : "#6b7280",
+
+customHeaderMode:
+  raw.customHeaderMode === "logo" ? "logo" : "text",
+
+customHeaderLogo:
+  typeof raw.customHeaderLogo === "string"
+    ? raw.customHeaderLogo
+    : null,
+
+customHeaderLogoScale:
+  typeof raw.customHeaderLogoScale === "number"
+    ? raw.customHeaderLogoScale
+    : 100,
+
+customHeaderLogoOffsetX:
+  typeof raw.customHeaderLogoOffsetX === "number"
+    ? raw.customHeaderLogoOffsetX
+    : 0,
+
+customHeaderLogoOffsetY:
+  typeof raw.customHeaderLogoOffsetY === "number"
+    ? raw.customHeaderLogoOffsetY
+    : 0,
   };
 }
 
@@ -751,7 +806,17 @@ function Toast({ toast }) {
 // Genau dieser Bereich wird später als PNG exportiert.
 ////////////////////////////////////////////////////////////
 function Preview({ project, t }) {
-  const theme = THEMES[project.theme];
+const isCustom = project.theme === "custom";
+
+const theme = isCustom
+  ? {
+      ...THEMES.custom,
+      background: project.customBackgroundColor || "#ffffff",
+      text: project.customTextColor || "#111827",
+      subtext: project.customSubtextColor || "#6b7280",
+      accent: project.customTextColor || "#111827",
+    }
+  : THEMES[project.theme];
 
   // Nur sichtbare Floors / Tenants anzeigen:
   // Leere Einträge werden ausgefiltert
@@ -777,7 +842,10 @@ function Preview({ project, t }) {
   const useTwoColumns = visibleFloors.length >= 10 || totalEntries >= 16;
 
   // Prüfen, ob Titel/Gebäudename/Footer überhaupt vorhanden sind
-  const hasHeader = !!(project.title || project.buildingName);
+const hasHeader =
+  isCustom && project.customHeaderMode === "logo"
+    ? !!project.customHeaderLogo
+    : !!(project.title || project.buildingName);
   const hasFooter = !!project.footerText;
 
   // Feste Vorschau-Höhe im Editor
@@ -859,6 +927,8 @@ function Preview({ project, t }) {
       logoBoxHeight: 40,
       footerFont: 11,
       accentWidth: 42,
+      headerLogoHeight: 80,
+      headerLogoGap: 6,
     };
   } else {
     layout = {
@@ -878,7 +948,12 @@ function Preview({ project, t }) {
   }
 
   // Verfügbaren Platz in der Vorschau berechnen
-  const headerHeight = hasHeader ? 70 + layout.headerGap : 0;
+ const headerHeight =
+  hasHeader && isCustom && project.customHeaderMode === "logo"
+    ? 90
+    : hasHeader
+    ? 70 + layout.headerGap
+    : 0;
   const footerHeight = hasFooter ? 28 : 0;
   const availableHeight =
     previewHeight - layout.padding * 2 - headerHeight - footerHeight;
@@ -947,35 +1022,70 @@ const globalTenantSubtitleFontSize = getGlobalFittedFontSize({
         id="preview-capture" // Dieser Bereich wird als PNG exportiert
         className="phone-preview"
         style={{
-          background: theme.background,
+          background:
+  isCustom &&
+  project.customBackgroundType === "image" &&
+  project.customBackgroundImage
+    ? `url(${project.customBackgroundImage}) center / cover no-repeat`
+    : theme.background,
           color: theme.text,
           borderColor: theme.cardBorder,
           padding: `${layout.padding}px`,
         }}
       >
-        {hasHeader ? (
-          <div style={{ marginBottom: layout.headerGap }}>
-            <div
-              className="preview-accent"
-              style={{
-                background: theme.accent,
-                width: `${layout.accentWidth}px`,
-              }}
-            />
+{hasHeader ? (
+<div
+  style={{
+    height:
+      isCustom && project.customHeaderMode === "logo"
+        ? "90px"
+        : "auto",
+    marginBottom:
+      isCustom && project.customHeaderMode === "logo"
+        ? "0px"
+        : layout.headerGap,
+    position: "relative",
+  }}
+>
+    {isCustom && project.customHeaderMode === "logo" ? (
+<div className="custom-header-logo-fixed">
+  <img
+    src={project.customHeaderLogo}
+    alt="Header Logo"
+    className="custom-header-logo"
+    style={{
+      width: `${clamp(project.customHeaderLogoScale || 70, 30, 300)}px`,
+      transform: `translate(${project.customHeaderLogoOffsetX || 0}px, ${
+        project.customHeaderLogoOffsetY || 0
+      }px)`,
+    }}
+  />
+</div>
+    ) : (
+      <>
+        <div
+          className="preview-accent"
+          style={{
+            background: theme.accent,
+            width: `${layout.accentWidth}px`,
+          }}
+        />
 
-            {project.title ? (
-              <h1 className="preview-title" style={{ color: theme.text }}>
-                {project.title}
-              </h1>
-            ) : null}
+        {project.title ? (
+          <h1 className="preview-title" style={{ color: theme.text }}>
+            {project.title}
+          </h1>
+        ) : null}
 
-            {project.buildingName ? (
-              <div className="preview-building" style={{ color: theme.subtext }}>
-                {project.buildingName}
-              </div>
-            ) : null}
+        {project.buildingName ? (
+          <div className="preview-building" style={{ color: theme.subtext }}>
+            {project.buildingName}
           </div>
         ) : null}
+      </>
+    )}
+  </div>
+) : null}
 
         <div className="preview-body">
           <div className={useTwoColumns ? "floors floors-two-columns" : "floors"}>
@@ -1365,22 +1475,17 @@ export default function App() {
   // LOGO HOCHLADEN
   // Das Bild wird als Data-URL gespeichert
   //////////////////////////////////////////////////////////
-  const onLogoUpload = async (floorId, tenantId, file) => {
-    if (!file) return;
+const onCustomImageUpload = async (fieldName, file) => {
+  if (!file) return;
 
-    try {
-      const dataUrl = await fileToDataUrl(file);
-      updateTenant(floorId, tenantId, {
-        mode: "logo",
-        logo: dataUrl,
-        name: "",
-        subtitle: "",
-      });
-      showToast(t.toastLogoUploaded, "success");
-    } catch {
-      showToast(t.toastLogoError, "error");
-    }
-  };
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    updateProject({ [fieldName]: dataUrl });
+    showToast(t.toastLogoUploaded, "success");
+  } catch {
+    showToast(t.toastLogoError, "error");
+  }
+};
 
   //////////////////////////////////////////////////////////
   // PROJEKT ALS JSON SPEICHERN
@@ -1549,6 +1654,163 @@ export default function App() {
           </div>
 
           {/* Theme und Footer */}
+          {project.theme === "custom" ? (
+  <div className="custom-editor-box">
+    <div className="grid-two">
+      <div className="field">
+        <label>Custom Hintergrund</label>
+        <select
+          value={project.customBackgroundType || "color"}
+          onChange={(e) =>
+            updateProject({ customBackgroundType: e.target.value })
+          }
+        >
+          <option value="color">Farbe</option>
+          <option value="image">Bild</option>
+        </select>
+      </div>
+
+      {project.customBackgroundType === "color" ? (
+        <div className="field">
+          <label>Hintergrundfarbe</label>
+          <input
+            type="color"
+            value={project.customBackgroundColor || "#ffffff"}
+            onChange={(e) =>
+              updateProject({ customBackgroundColor: e.target.value })
+            }
+          />
+        </div>
+      ) : (
+        <div className="field">
+          <label>Hintergrundbild 1080×1920 oder 1920×1080</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              onCustomImageUpload(
+                "customBackgroundImage",
+                e.target.files?.[0]
+              )
+            }
+          />
+        </div>
+      )}
+
+      <div className="field">
+        <label>Textfarbe</label>
+        <input
+          type="color"
+          value={project.customTextColor || "#111827"}
+          onChange={(e) =>
+            updateProject({ customTextColor: e.target.value })
+          }
+        />
+      </div>
+
+      <div className="field">
+        <label>Untertext-/Etagenfarbe</label>
+        <input
+          type="color"
+          value={project.customSubtextColor || "#6b7280"}
+          onChange={(e) =>
+            updateProject({ customSubtextColor: e.target.value })
+          }
+        />
+      </div>
+    </div>
+
+    <div className="grid-two">
+      <div className="field">
+        <label>Header Custom</label>
+        <select
+          value={project.customHeaderMode || "text"}
+          onChange={(e) =>
+            updateProject({ customHeaderMode: e.target.value })
+          }
+        >
+          <option value="text">Titel + Gebäudename</option>
+          <option value="logo">Logo</option>
+        </select>
+      </div>
+
+      {project.customHeaderMode === "logo" ? (
+        <>
+          <div className="field">
+            <label>Header-Logo hochladen</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                onCustomImageUpload(
+                  "customHeaderLogo",
+                  e.target.files?.[0]
+                )
+              }
+            />
+          </div>
+
+          <div className="field">
+            <label>Header-Logo Grösse (%)</label>
+            <input
+              type="number"
+              min="30"
+              max="300"
+              value={project.customHeaderLogoScale || 100}
+              onChange={(e) =>
+                updateProject({
+                  customHeaderLogoScale: clamp(
+                    Number(e.target.value) || 100,
+                    30,
+                    300
+                  ),
+                })
+              }
+            />
+          </div>
+
+          <div className="field">
+            <label>Header-Logo X</label>
+            <input
+              type="number"
+              min="-300"
+              max="300"
+              value={project.customHeaderLogoOffsetX || 0}
+              onChange={(e) =>
+                updateProject({
+                  customHeaderLogoOffsetX: clamp(
+                    Number(e.target.value) || 0,
+                    -300,
+                    300
+                  ),
+                })
+              }
+            />
+          </div>
+
+          <div className="field">
+            <label>Header-Logo Y</label>
+            <input
+              type="number"
+              min="-300"
+              max="300"
+              value={project.customHeaderLogoOffsetY || 0}
+              onChange={(e) =>
+                updateProject({
+                  customHeaderLogoOffsetY: clamp(
+                    Number(e.target.value) || 0,
+                    -300,
+                    300
+                  ),
+                })
+              }
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
+  </div>
+) : null}
           <div className="grid-two">
             <div className="field">
               <label>{t.designVariantLabel}</label>

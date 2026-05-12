@@ -833,5 +833,44 @@ select:disabled {
     min-width: 0;
   }
 
+.custom-editor-box {
+  margin-bottom: 20px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.custom-header-logo-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-header-logo {
+  display: block;
+  max-height: 120px;
+  object-fit: contain;
+}
+.custom-header-logo-fixed {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 220px;
+  height: 90px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.custom-header-logo {
+  display: block;
+  max-width: 220px;
+  max-height: 90px;
+  object-fit: contain;
+}
 
 }
